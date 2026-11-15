@@ -1,0 +1,84 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <!-- the Windows 10 SDK's WinRT parts: Windows' media controls (Now playing in vShell, the media keys, the volume pop-up) -->
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <AssemblyName>vView</AssemblyName>
+    <RootNamespace>vView</RootNamespace>
+    <StartupObject>vView.Program</StartupObject>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Version>0.1.29</Version>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <PlatformTarget>x64</PlatformTarget>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>false</SelfContained>
+    <!-- made by running vView.exe with make-icon (see AppIcon.cs), in vShell's default colours; the window's icon follows the theme -->
+    <ApplicationIcon>vview.ico</ApplicationIcon>
+    <!-- VLC: only the 64-bit engine -->
+    <VlcWindowsX86Enabled>false</VlcWindowsX86Enabled>
+    <VlcWindowsArm64Enabled>false</VlcWindowsArm64Enabled>
+  </PropertyGroup>
+
+  <!--
+    VLC's plugin cache (libvlc\win-x64\plugins\plugins.dat): without it VLC opens all its ~280 plugin files every time it starts - 13 s
+    from a network share, about a second from a local disk; with it, under 0.1 s. VLC's own vlc-cache-gen.exe (from an installed VLC)
+    writes it - run from inside our libvlc folder, so it uses vView's VLC version. No VLC installed: no cache (vView still works).
+  -->
+  <PropertyGroup>
+    <VlcCacheGen>$(ProgramFiles)\VideoLAN\VLC\vlc-cache-gen.exe</VlcCacheGen>
+  </PropertyGroup>
+  <Target Name="VlcPluginCache" AfterTargets="Build;Publish" Condition="Exists('$(VlcCacheGen)')">
+    <PropertyGroup>
+      <VlcDir Condition="'$(PublishDir)' != '' And Exists('$(PublishDir)libvlc\win-x64')">$([System.IO.Path]::GetFullPath('$(PublishDir)libvlc\win-x64'))</VlcDir>
+      <VlcDir Condition="'$(VlcDir)' == ''">$([System.IO.Path]::GetFullPath('$(OutDir)libvlc\win-x64'))</VlcDir>
+    </PropertyGroup>
+    <Copy SourceFiles="$(VlcCacheGen)" DestinationFolder="$(VlcDir)" Condition="Exists('$(VlcDir)\plugins')" />
+    <Exec Command="&quot;$(VlcDir)\vlc-cache-gen.exe&quot; &quot;$(VlcDir)\plugins&quot;" WorkingDirectory="$(VlcDir)" Condition="Exists('$(VlcDir)\plugins')" ContinueOnError="true" />
+    <Delete Files="$(VlcDir)\vlc-cache-gen.exe" />
+  </Target>
+
+  <ItemGroup>
+    <!-- VLC's parts vView never uses: its own interface, scripting, streaming out, visualisations, network discovery -->
+    <VlcWindowsX64ExcludeFiles Include="plugins\gui\%2A;plugins\lua\%2A;plugins\visualization\%2A;plugins\stream_out\%2A;plugins\access_output\%2A;plugins\mux\%2A;plugins\services_discovery\%2A;plugins\control\%2A" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- video and audio: VLC's engine (LGPL - its DLLs ship as separate files in libvlc\, with its licence) -->
+    <PackageReference Include="LibVLCSharp.WPF" Version="3.10.2" />
+    <PackageReference Include="NAudio.Wasapi" Version="3.3.0" />
+    <PackageReference Include="VideoLAN.LibVLC.Windows" Version="3.0.24" />
+    <!-- the Windows Shell: thumbnails for the strip, the Recycle Bin -->
+    <PackageReference Include="Vanara.Windows.Shell" Version="5.0.8" />
+    <!-- Jellyfin's web page in the window: Edge's engine (WebView2 - part of Windows 11) -->
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4258.31" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- vView's player, put into Jellyfin's page (MainWindow.Jellyfin.cs) -->
+    <EmbeddedResource Include="src\Ui\jellyfin-bridge.js" LogicalName="vView.jellyfin-bridge.js" />
+  </ItemGroup>
+
+  <!-- the suite's shared library (git submodule vSuite.Core): theme, glass, styles, questions, log, updater, Options blocks, shell icons -->
+  <ItemGroup>
+    <ProjectReference Include="vSuite.Core\vSuite.Core\vSuite.Core.csproj" />
+    <ProjectReference Include="vSuite.Core\vSuite.Shell\vSuite.Shell.csproj" />
+    <Compile Remove="vSuite.Core\**" />
+    <Page Remove="vSuite.Core\**" />
+    <None Remove="vSuite.Core\**" />
+    <EmbeddedResource Remove="vSuite.Core\**" />
+    <Resource Remove="vSuite.Core\**" />
+  </ItemGroup>
+
+  <!-- the tests (tests\vView.Tests) are their own project: dotnet test tests\vView.Tests -->
+  <ItemGroup>
+    <Compile Remove="tests\**" />
+    <Page Remove="tests\**" />
+    <None Remove="tests\**" />
+    <EmbeddedResource Remove="tests\**" />
+  </ItemGroup>
+
+</Project>

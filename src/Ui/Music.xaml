@@ -1,0 +1,131 @@
+<!-- Music styles shared by the main window and the classic player (merged into the app's resources in Program) -->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- a song in the playlist: its number (a speaker while it plays), title and artist, length; the one playing in the accent -->
+    <Style x:Key="vv.TrackItem" TargetType="ListBoxItem">
+        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+        <Setter Property="Foreground" Value="{DynamicResource vx.Fg}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBoxItem">
+                    <Border x:Name="Row" CornerRadius="6" Padding="8,5" Margin="0,1" Background="Transparent">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="30"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="Num" Text="{Binding Number}" FontSize="11" Foreground="{DynamicResource vx.FgDim}" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="Playing" Text="&#xE767;" FontFamily="{DynamicResource vx.Icons}" FontSize="12" Visibility="Collapsed"
+                                       Foreground="{DynamicResource vx.Accent}" VerticalAlignment="Center"/>
+                            <StackPanel Grid.Column="1" Margin="0,0,8,0">
+                                <TextBlock x:Name="TitleText" Text="{Binding Title}" TextTrimming="CharacterEllipsis"/>
+                                <TextBlock x:Name="ArtistText" Text="{Binding Artist}" FontSize="11" Foreground="{DynamicResource vx.FgDim}" TextTrimming="CharacterEllipsis"/>
+                            </StackPanel>
+                            <TextBlock Grid.Column="2" Text="{Binding LengthText}" FontSize="11" Foreground="{DynamicResource vx.FgDim}" VerticalAlignment="Center"/>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <DataTrigger Binding="{Binding Artist}" Value=""><Setter TargetName="ArtistText" Property="Visibility" Value="Collapsed"/></DataTrigger>
+                        <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Row" Property="Background" Value="{DynamicResource vx.Hover}"/></Trigger>
+                        <Trigger Property="IsSelected" Value="True"><Setter TargetName="Row" Property="Background" Value="{DynamicResource vx.Active}"/></Trigger>
+                        <DataTrigger Binding="{Binding IsCurrent}" Value="True">
+                            <Setter TargetName="Row" Property="Background" Value="{DynamicResource vx.SelBg}"/>
+                            <Setter TargetName="Num" Property="Visibility" Value="Collapsed"/>
+                            <Setter TargetName="Playing" Property="Visibility" Value="Visible"/>
+                            <Setter TargetName="TitleText" Property="FontWeight" Value="SemiBold"/>
+                        </DataTrigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- a compact row in the classic player's list: one line, "3. Title - Artist", the length -->
+    <Style x:Key="vv.ClassicTrackItem" TargetType="ListBoxItem" BasedOn="{StaticResource vv.TrackItem}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBoxItem">
+                    <Border x:Name="Row" CornerRadius="5" Padding="6,4" Margin="0,0,0,1" Background="Transparent">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="26"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="Num" Text="{Binding Number}" FontSize="11" Foreground="{DynamicResource vx.FgDim}" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="Playing" Text="&#xE767;" FontFamily="{DynamicResource vx.Icons}" FontSize="11" Visibility="Collapsed"
+                                       Foreground="{DynamicResource vx.Accent}" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" Margin="0,0,8,0" TextTrimming="CharacterEllipsis" VerticalAlignment="Center">
+                                <Run x:Name="TitleRun" Text="{Binding Title, Mode=OneWay}"/><Run x:Name="ArtistRun" Text="{Binding Artist, Mode=OneWay, StringFormat='  {0}'}" Foreground="{DynamicResource vx.FgDim}"/>
+                            </TextBlock>
+                            <TextBlock Grid.Column="2" Text="{Binding LengthText}" FontSize="11" Foreground="{DynamicResource vx.FgDim}" VerticalAlignment="Center"/>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Row" Property="Background" Value="{DynamicResource vx.Hover}"/></Trigger>
+                        <Trigger Property="IsSelected" Value="True"><Setter TargetName="Row" Property="Background" Value="{DynamicResource vx.Active}"/></Trigger>
+                        <DataTrigger Binding="{Binding IsCurrent}" Value="True">
+                            <Setter TargetName="Row" Property="Background" Value="{DynamicResource vx.SelBg}"/>
+                            <Setter TargetName="Num" Property="Visibility" Value="Collapsed"/>
+                            <Setter TargetName="Playing" Property="Visibility" Value="Visible"/>
+                            <Setter TargetName="TitleRun" Property="FontWeight" Value="SemiBold"/>
+                        </DataTrigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- the classic player's play / pause: filled with the accent -->
+    <Style x:Key="vv.PlayButton" TargetType="Button">
+        <Setter Property="Foreground" Value="{DynamicResource vx.OnAccent}"/>
+        <Setter Property="Background" Value="{DynamicResource vx.Accent}"/>
+        <Setter Property="FontFamily" Value="{DynamicResource vx.Icons}"/>
+        <Setter Property="FontSize" Value="15"/>
+        <Setter Property="Width" Value="44"/>
+        <Setter Property="Height" Value="34"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Bd" CornerRadius="8" Background="{TemplateBinding Background}">
+                        <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Bd" Property="Opacity" Value="0.85"/></Trigger>
+                        <Trigger Property="IsPressed" Value="True"><Setter TargetName="Bd" Property="Opacity" Value="0.7"/></Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- a small round-cornered button with words (EQ, List, presets) that shows when it's on -->
+    <Style x:Key="vv.Chip" TargetType="ToggleButton">
+        <Setter Property="Foreground" Value="{DynamicResource vx.Fg}"/>
+        <Setter Property="Background" Value="{DynamicResource vx.Ctrl}"/>
+        <Setter Property="FontSize" Value="11.5"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Height" Value="26"/>
+        <Setter Property="Padding" Value="10,0"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                    <Border x:Name="Bd" CornerRadius="13" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Bd" Property="Background" Value="{DynamicResource vx.CtrlHover}"/></Trigger>
+                        <Trigger Property="IsChecked" Value="True"><Setter TargetName="Bd" Property="Background" Value="{DynamicResource vx.Selected}"/></Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</ResourceDictionary>

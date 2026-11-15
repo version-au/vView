@@ -1,0 +1,180 @@
+<!-- The classic player: a small window for music - the player, the equaliser and the playlist stacked, or one line (the shade).
+     A view only: MainWindow.Classic.cs wires it to the main window's player and playlist. -->
+<Window x:Class="vView.Ui.ClassicPlayer"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="vView" Width="460" SizeToContent="Height" ResizeMode="NoResize"
+        FontFamily="Segoe UI" FontSize="12.5" Foreground="{DynamicResource vx.Fg}" Background="Transparent"
+        UseLayoutRounding="True" AllowDrop="True" ShowInTaskbar="True" WindowStartupLocation="Manual">
+    <Border x:Name="Root" Background="{DynamicResource vx.Bg}">
+        <StackPanel>
+            <!-- ===== the title row (drag the window by it; double-click: one line) ===== -->
+            <DockPanel x:Name="TitleRow" Height="36">
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="0,0,4,0">
+                    <Button x:Name="OptionsBtn" Style="{StaticResource vx.IconButton}" Content="&#xE713;" ToolTip="Options (Ctrl+,)"/>
+                    <Button x:Name="PinBtn" Style="{StaticResource vx.IconButton}" Content="&#xE718;" ToolTip="Keep on top"/>
+                    <Button x:Name="ShadeBtn" Style="{StaticResource vx.IconButton}" Content="&#xE70E;" ToolTip="One line (double-click the title)"/>
+                    <Button x:Name="FullBtn" Style="{StaticResource vx.IconButton}" Content="&#xE740;" ToolTip="Back to the full window"/>
+                    <Button x:Name="MinBtn" Style="{StaticResource vx.IconButton}" Content="&#xE921;" ToolTip="Minimise"/>
+                    <Button x:Name="CloseBtn" Style="{StaticResource vx.IconButton}" Content="&#xE8BB;" ToolTip="Close vView"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="4,0,0,0">
+                    <!-- the vView menu, as the full window's icon: open a file / folder / stream, Jellyfin, Options … -->
+                    <Button x:Name="AppMenuBtn" Style="{StaticResource vx.IconButton}" Width="30" Height="28" ToolTip="vView menu">
+                        <Image x:Name="AppMark" Width="16" Height="16" RenderOptions.BitmapScalingMode="HighQuality"/>
+                    </Button>
+                    <TextBlock Text="vView" FontWeight="SemiBold" Margin="4,0,0,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="Music" Foreground="{DynamicResource vx.FgDim}" Margin="6,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
+            </DockPanel>
+
+            <!-- ===== the player ===== -->
+            <StackPanel x:Name="PlayerPanel" Margin="12,0,12,12">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="196"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <!-- the display: playing / paused / stopped, the time (click: time left), the visualiser -->
+                    <Border CornerRadius="10" Background="{DynamicResource vx.Panel}" BorderBrush="{DynamicResource vx.Line}" BorderThickness="1"
+                            Padding="10,6,10,8" Height="104">
+                        <DockPanel>
+                            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
+                                <TextBlock x:Name="StateGlyph" Text="&#xE768;" FontFamily="{StaticResource vx.Icons}" FontSize="12"
+                                           Foreground="{DynamicResource vx.Accent}" VerticalAlignment="Center"/>
+                                <TextBlock x:Name="BigTime" Text="0:00" FontFamily="Cascadia Mono, Consolas" FontSize="34" FontWeight="Bold"
+                                           Foreground="{DynamicResource vx.Accent}" Margin="8,-2,0,0" Cursor="Hand" ToolTip="Time gone / time left"/>
+                            </StackPanel>
+                            <Canvas x:Name="Bars" VerticalAlignment="Bottom" HorizontalAlignment="Left" IsHitTestVisible="False"/>
+                        </DockPanel>
+                    </Border>
+                    <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                        <!-- the song, scrolling when it doesn't fit -->
+                        <Border Height="30" CornerRadius="8" Background="{DynamicResource vx.Panel}" BorderBrush="{DynamicResource vx.Line}" BorderThickness="1">
+                            <Canvas x:Name="MarqueeBox" ClipToBounds="True" Margin="8,0">
+                                <TextBlock x:Name="Marquee" Canvas.Top="6"/>
+                            </Canvas>
+                        </Border>
+                        <ItemsControl x:Name="Chips" Margin="0,8,0,0" Focusable="False" Height="44">
+                            <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border CornerRadius="9" Padding="7,1" Margin="0,0,5,5" Background="{DynamicResource vx.Ctrl}">
+                                        <TextBlock Text="{Binding}" FontSize="10.5"/>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <DockPanel>
+                            <Button x:Name="MuteBtn" DockPanel.Dock="Left" Style="{StaticResource vx.IconButton}" Content="&#xE767;" ToolTip="Mute (M)"/>
+                            <TextBlock x:Name="VolumeText" DockPanel.Dock="Right" FontSize="11" Foreground="{DynamicResource vx.FgDim}" Width="26"
+                                       TextAlignment="Right" VerticalAlignment="Center"/>
+                            <Grid x:Name="VolumeBar" Height="22" Background="Transparent" Cursor="Hand" Margin="4,0,0,0" ToolTip="Volume (Up / Down, or the wheel)">
+                                <Border Height="4" CornerRadius="2" Background="{DynamicResource vx.Track}" VerticalAlignment="Center"/>
+                                <Border x:Name="VolumeFill" Height="4" CornerRadius="2" Background="{DynamicResource vx.Accent}" VerticalAlignment="Center" HorizontalAlignment="Left"/>
+                            </Grid>
+                        </DockPanel>
+                    </StackPanel>
+                </Grid>
+
+                <!-- where it's up to -->
+                <DockPanel Margin="0,10,0,0">
+                    <TextBlock x:Name="TimeText" DockPanel.Dock="Left" Text="0:00" FontSize="11" Foreground="{DynamicResource vx.FgDim}" VerticalAlignment="Center" MinWidth="34"/>
+                    <TextBlock x:Name="LengthText" DockPanel.Dock="Right" Text="0:00" FontSize="11" Foreground="{DynamicResource vx.FgDim}" VerticalAlignment="Center"
+                               MinWidth="34" TextAlignment="Right"/>
+                    <Grid x:Name="SeekBar" Height="22" Background="Transparent" Cursor="Hand" Margin="6,0">
+                        <Border Height="5" CornerRadius="2.5" Background="{DynamicResource vx.Track}" VerticalAlignment="Center"/>
+                        <Border x:Name="SeekFill" Height="5" CornerRadius="2.5" Background="{DynamicResource vx.Accent}" VerticalAlignment="Center" HorizontalAlignment="Left"/>
+                        <Ellipse x:Name="SeekKnob" Width="13" Height="13" Fill="{DynamicResource vx.Fg}" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                    </Grid>
+                </DockPanel>
+
+                <!-- the buttons -->
+                <DockPanel Margin="0,8,0,0">
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                        <ToggleButton x:Name="EqChip" Style="{StaticResource vv.Chip}" Content="EQ" ToolTip="The equaliser"/>
+                        <ToggleButton x:Name="ListChip" Style="{StaticResource vv.Chip}" Content="List" Margin="6,0,0,0" ToolTip="The playlist"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Button x:Name="PrevBtn" Style="{StaticResource vx.IconButton}" Content="&#xE892;" ToolTip="Previous (Page Up)"/>
+                        <Button x:Name="PlayBtn" Style="{StaticResource vv.PlayButton}" Content="&#xE768;" ToolTip="Play (Space)" Margin="2,0"/>
+                        <Button x:Name="StopBtn" Style="{StaticResource vx.IconButton}" Content="&#xE71A;" ToolTip="Stop"/>
+                        <Button x:Name="NextBtn" Style="{StaticResource vx.IconButton}" Content="&#xE893;" ToolTip="Next (Page Down)"/>
+                        <Rectangle Width="10"/>
+                        <Button x:Name="ShuffleBtn" Style="{StaticResource vx.IconButton}" Content="&#xE8B1;" ToolTip="Shuffle"/>
+                        <Button x:Name="RepeatBtn" Style="{StaticResource vx.IconButton}" Content="&#xE8EE;" ToolTip="Repeat"/>
+                    </StackPanel>
+                </DockPanel>
+            </StackPanel>
+
+            <!-- ===== the equaliser ===== -->
+            <Border x:Name="EqPanel" BorderBrush="{DynamicResource vx.Line}" BorderThickness="0,1,0,0" Padding="12,8,12,10" Visibility="Collapsed">
+                <StackPanel>
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                            <ToggleButton x:Name="EqOnChip" Style="{StaticResource vv.Chip}" Content="On" ToolTip="The equaliser on / off"/>
+                            <ToggleButton x:Name="PresetChip" Style="{StaticResource vv.Chip}" Margin="6,0,0,0" ToolTip="Presets">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock x:Name="PresetText" Text="Flat"/>
+                                    <TextBlock Text="&#xE70D;" FontFamily="{StaticResource vx.Icons}" FontSize="9" Margin="6,1,0,0" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </ToggleButton>
+                        </StackPanel>
+                        <TextBlock Text="Equaliser" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                    </DockPanel>
+                    <Grid x:Name="EqGrid" Margin="0,10,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <!-- ===== the playlist ===== -->
+            <Border x:Name="ListPanel" BorderBrush="{DynamicResource vx.Line}" BorderThickness="0,1,0,0" Padding="6,6,6,8">
+                <DockPanel>
+                    <!-- drag the bottom edge: a longer (or shorter) list -->
+                    <Thumb x:Name="ListGrip" DockPanel.Dock="Bottom" Height="10" Margin="0,2,0,-8" Cursor="SizeNS" ToolTip="Drag to make the list longer or shorter">
+                        <Thumb.Template>
+                            <ControlTemplate TargetType="Thumb">
+                                <Border Background="Transparent">
+                                    <Border Width="36" Height="4" CornerRadius="2" Background="{DynamicResource vx.Thumb}" VerticalAlignment="Center"/>
+                                </Border>
+                            </ControlTemplate>
+                        </Thumb.Template>
+                    </Thumb>
+                    <DockPanel DockPanel.Dock="Top" Margin="6,0,0,4">
+                        <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                            <Button x:Name="AddBtn" Style="{StaticResource vx.IconButton}" Content="&#xE710;" ToolTip="Add songs"/>
+                            <Button x:Name="AddFolderBtn" Style="{StaticResource vx.IconButton}" Content="&#xE8F4;" ToolTip="Add a folder"/>
+                            <Button x:Name="SaveBtn" Style="{StaticResource vx.IconButton}" Content="&#xE74E;" ToolTip="Save the list"/>
+                        </StackPanel>
+                        <TextBlock VerticalAlignment="Center">
+                            <Run Text="Playlist" FontWeight="SemiBold"/><Run x:Name="ListSummary" Foreground="{DynamicResource vx.FgDim}" FontSize="11.5"/>
+                        </TextBlock>
+                    </DockPanel>
+                    <ListBox x:Name="List" Height="230" Background="Transparent" BorderThickness="0" Padding="0"
+                             ItemContainerStyle="{DynamicResource vv.ClassicTrackItem}" AllowDrop="True" SelectionMode="Extended"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled" VirtualizingPanel.IsVirtualizing="True"
+                             VirtualizingPanel.VirtualizationMode="Recycling" VirtualizingPanel.ScrollUnit="Pixel">
+                        <ListBox.ContextMenu><ContextMenu/></ListBox.ContextMenu>
+                    </ListBox>
+                </DockPanel>
+            </Border>
+
+            <!-- ===== one line (the shade) ===== -->
+            <DockPanel x:Name="ShadeRow" Height="40" Visibility="Collapsed" Margin="10,0,4,0">
+                <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Image x:Name="ShadeMark" Width="14" Height="14" RenderOptions.BitmapScalingMode="HighQuality"/>
+                    <TextBlock x:Name="ShadeTime" Text="0:00" FontFamily="Cascadia Mono, Consolas" FontSize="13" FontWeight="Bold"
+                               Foreground="{DynamicResource vx.Accent}" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                    <Canvas x:Name="ShadeBars" Margin="10,0,10,0" VerticalAlignment="Center" IsHitTestVisible="False"/>
+                </StackPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                    <Button x:Name="ShadePrevBtn" Style="{StaticResource vx.IconButton}" Content="&#xE892;" ToolTip="Previous"/>
+                    <Button x:Name="ShadePlayBtn" Style="{StaticResource vx.IconButton}" Content="&#xE768;" ToolTip="Play"/>
+                    <Button x:Name="ShadeNextBtn" Style="{StaticResource vx.IconButton}" Content="&#xE893;" ToolTip="Next"/>
+                    <Button x:Name="UnshadeBtn" Style="{StaticResource vx.IconButton}" Content="&#xE70D;" ToolTip="The whole player"/>
+                    <Button x:Name="ShadeCloseBtn" Style="{StaticResource vx.IconButton}" Content="&#xE8BB;" ToolTip="Close vView"/>
+                </StackPanel>
+                <TextBlock x:Name="ShadeTitle" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+            </DockPanel>
+        </StackPanel>
+    </Border>
+</Window>

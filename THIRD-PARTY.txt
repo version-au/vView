@@ -1,0 +1,32 @@
+vView uses these, with thanks:
+
+libVLC (VLC's engine) - plays the videos and sounds
+  (c) VideoLAN and the VLC authors - https://www.videolan.org/vlc/libvlc.html
+  Licence: GNU Lesser General Public License, version 2.1 or later. Its DLLs are in the libvlc folder, unchanged, and can be
+  replaced with another build of libVLC 3.0. Source: https://code.videolan.org/videolan/vlc
+
+LibVLCSharp - the .NET connection to libVLC
+  (c) VideoLAN - https://code.videolan.org/videolan/LibVLCSharp
+  Licence: GNU Lesser General Public License, version 2.1 or later.
+
+Vanara - Windows Shell access (thumbnails)
+  (c) David Hall - https://github.com/dahall/Vanara
+  Licence: MIT.
+
+Microsoft Edge WebView2 SDK - shows Jellyfin's page (the browser engine itself is part of Windows)
+  (c) Microsoft Corporation - https://aka.ms/webview2
+  Licence: BSD 3-clause (see the Microsoft.Web.WebView2 package).
+
+NAudio - listens to vView's own sound for the visualiser
+  (c) Mark Heath and contributors - https://github.com/naudio/NAudio
+  Licence: MIT.
+
+vSuite.Core - the suite's shared library (theme, windows, updates)
+  (c) 2026 Steven (version-au) - https://github.com/version-au/vSuite.Core
+  Licence: MIT.
+
+.NET - the runtime built into the app
+  (c) .NET Foundation and Contributors - https://dotnet.microsoft.com
+  Licence: MIT.
+
+Pictures are read by Windows' own Windows Imaging Component.
