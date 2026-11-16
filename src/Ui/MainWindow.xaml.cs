@@ -668,7 +668,7 @@ namespace vView.Ui
             if (!bin)
             {
                 if (!Ask.YesNo(this, "Delete it for good?", "“" + it.Name + "” is on a drive with no Recycle Bin (a network or removable drive), so it can't be got back. Delete it for good?",
-                               "Delete for good", "Cancel", false)) return;
+                               "Delete for good", "Cancel", true)) return;
             }
             else if (_settings.ConfirmDelete && !Ask.YesNo(this, "Move to the Recycle Bin?", "Move “" + it.Name + "” to the Recycle Bin? You can get it back from there.",
                                                       "Move to Recycle Bin", "Cancel", true)) return;
