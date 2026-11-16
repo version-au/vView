@@ -647,11 +647,30 @@ namespace vView.Ui
 
         void Delete_Click(object sender, RoutedEventArgs e) { DeleteCurrent(); }
 
+        /// <summary>Only a fixed drive (an internal or external disk) has a Recycle Bin - not a network drive or share, a USB stick or a card.</summary>
+        static bool HasRecycleBin(string path)
+        {
+            try
+            {
+                string root = Path.GetPathRoot(Path.GetFullPath(path));
+                if (string.IsNullOrEmpty(root) || root.StartsWith(@"\\")) return false;
+                return new DriveInfo(root).DriveType == DriveType.Fixed;
+            }
+            catch { return false; }
+        }
+
         async void DeleteCurrent()
         {
             MediaItem it = Current;
             if (it == null || it.IsStream) return;
-            if (_settings.ConfirmDelete && !Ask.YesNo(this, "Move to the Recycle Bin?", "Move “" + it.Name + "” to the Recycle Bin? You can get it back from there.",
+            // a network or removable drive has no Recycle Bin: Windows would delete it for good without a word - always ask, and say so
+            bool bin = HasRecycleBin(it.Path);
+            if (!bin)
+            {
+                if (!Ask.YesNo(this, "Delete it for good?", "“" + it.Name + "” is on a drive with no Recycle Bin (a network or removable drive), so it can't be got back. Delete it for good?",
+                               "Delete for good", "Cancel", false)) return;
+            }
+            else if (_settings.ConfirmDelete && !Ask.YesNo(this, "Move to the Recycle Bin?", "Move “" + it.Name + "” to the Recycle Bin? You can get it back from there.",
                                                       "Move to Recycle Bin", "Cancel", true)) return;
             int at = _index;
             await StopVideo();   // VLC lets go of the file
@@ -661,7 +680,8 @@ namespace vView.Ui
                 try
                 {
                     Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(it.Path, Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs,
-                                                                       Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin);
+                                                                       bin ? Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin
+                                                                           : Microsoft.VisualBasic.FileIO.RecycleOption.DeletePermanently);
                     return null;
                 }
                 catch (OperationCanceledException) { return ""; }
@@ -669,11 +689,11 @@ namespace vView.Ui
             });
             if (error != null)
             {
-                if (error.Length > 0) Flash("Couldn't move it to the Recycle Bin: " + error);
+                if (error.Length > 0) Flash((bin ? "Couldn't move it to the Recycle Bin: " : "Couldn't delete it: ") + error);
                 ShowAt(at);
                 return;
             }
-            Log.Write("Recycled " + it.Path);
+            Log.Write((bin ? "Recycled " : "Deleted for good (no Recycle Bin on that drive) ") + it.Path);
             _items.Remove(it);
             if (_items.Count == 0) { _index = -1; ShowEmpty("That was the last one in this folder."); return; }
             _index = -1;

@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.1.30
+- Delete on a network drive, a USB stick or a card (no Recycle Bin there) asks "Delete it for good?" first - it used to delete for good while saying it went to the Recycle Bin.
+
 ## 0.1.29 · release
 - vview.log keeps VLC's real problems only, not the messages it gives in normal playing (they filled the log).
 - Behind the scenes: the update notice's corner window is the shared library's (the same as vTerm's).

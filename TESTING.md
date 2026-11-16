@@ -1,5 +1,9 @@
 # Testing
 
+## 0.1.30: Delete where there is no Recycle Bin
+1. A picture on a network drive (S:\…), a \\server\share path or a USB stick, Delete: "Delete it for good? … is on a drive with no Recycle Bin …" with Cancel as the default - also with "Ask before deleting" off. Delete for good: gone, the next one shows, the log says "Deleted for good". Cancel: nothing happens.
+2. A picture on C: or another internal / external disk: as before - "Move to the Recycle Bin?" (or straight away with asking off), and it is in the Recycle Bin.
+
 ## 0.1.29: VLC's messages in the log
 1. Play a few videos and a Jellyfin episode, seek, go to the next one: vview.log has no "failed to create audio output", timestamp,
    "avcodec_send_packet" or TLS-session lines. A stream that won't open still says so ("Failed to open …").
