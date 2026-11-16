@@ -2,6 +2,8 @@
 
 ## 0.1.30
 - Delete on a network drive, a USB stick or a card (no Recycle Bin there) asks "Delete it for good?" first - it used to delete for good while saying it went to the Recycle Bin.
+- Huge pictures (panoramas, scans over 120 megapixels) open without being decoded at full size first, and the pictures kept for going back and forth are limited by their size.
+- A picture changed by another program, or one that couldn't be read a moment ago, is read again instead of showing what was remembered.
 
 ## 0.1.29 · release
 - vview.log keeps VLC's real problems only, not the messages it gives in normal playing (they filled the log).

@@ -42,19 +42,41 @@ namespace vView.Ui
         readonly List<KeyValuePair<string, Task<Decoded>>> _cache = new List<KeyValuePair<string, Task<Decoded>>>();
         const int CacheSize = 5;
 
+        /// <summary>The pictures kept may hold this much between them (a few 100-megapixel scans were 2 GB); the newest two always stay.</summary>
+        const long CacheBytes = 700L * 1024 * 1024;
+
+        /// <summary>A picture's place in the cache: its path and the file as it is now (changed or finished copying since: read again).</summary>
+        static string CacheKey(string path)
+        {
+            try { var fi = new FileInfo(path); return path + "|" + fi.LastWriteTimeUtc.Ticks + "|" + fi.Length; }
+            catch { return path + "|"; }
+        }
+
+        static long BytesOf(Task<Decoded> t)
+        {
+            if (!t.IsCompletedSuccessfully || t.Result == null) return 0;
+            long one = t.Result.Bitmap != null ? (long)t.Result.Bitmap.PixelWidth * t.Result.Bitmap.PixelHeight * 4 : 0;
+            return t.Result.Frames != null ? one * t.Result.Frames.Count : one;
+        }
+
         Task<Decoded> Decode(string path)
         {
+            string key = CacheKey(path);
             for (int i = 0; i < _cache.Count; i++)
-                if (string.Equals(_cache[i].Key, path, StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(_cache[i].Key, key, StringComparison.OrdinalIgnoreCase))
                 {
                     var hit = _cache[i];
+                    // one that couldn't be read (still being copied, locked for a moment) is tried again, not remembered
+                    if (hit.Value.IsCompleted && (!hit.Value.IsCompletedSuccessfully || hit.Value.Result == null || hit.Value.Result.Error != null)) { _cache.RemoveAt(i); break; }
                     _cache.RemoveAt(i);
                     _cache.Add(hit);
                     return hit.Value;
                 }
+            _cache.RemoveAll(c => c.Key.StartsWith(path + "|", StringComparison.OrdinalIgnoreCase));     // the file as it was before
             Task<Decoded> t = Task.Run(() => DecodeNow(path));
-            _cache.Add(new KeyValuePair<string, Task<Decoded>>(path, t));
+            _cache.Add(new KeyValuePair<string, Task<Decoded>>(key, t));
             while (_cache.Count > CacheSize) _cache.RemoveAt(0);
+            while (_cache.Count > 2 && _cache.Sum(c => BytesOf(c.Value)) > CacheBytes) _cache.RemoveAt(0);
             return t;
         }
 
@@ -62,7 +84,7 @@ namespace vView.Ui
         void ReleasePicture(MediaItem it)
         {
             if (it == null) return;
-            _cache.RemoveAll(c => string.Equals(c.Key, it.Path, StringComparison.OrdinalIgnoreCase));
+            _cache.RemoveAll(c => c.Key.StartsWith(it.Path + "|", StringComparison.OrdinalIgnoreCase));
             if (Current == it) { StopAnimation(); Pic.Source = null; _bmp = null; }
         }
 
@@ -74,24 +96,40 @@ namespace vView.Ui
                 // OnLoad reads it all now and lets go of the file; ReadWrite / Delete sharing so other apps aren't blocked meanwhile
                 using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
                 {
-                    BitmapDecoder dec = BitmapDecoder.Create(fs, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
-                    BitmapFrame frame = dec.Frames[0];
-                    BitmapSource bmp = frame;
-                    // a huge picture (a panorama, a scan): decoded smaller, at most 12000 px across
-                    if ((long)frame.PixelWidth * frame.PixelHeight > 120000000L)
+                    // its size first, from the file's header only: a huge picture (a panorama, a scan) is decoded smaller, at most
+                    // 12000 px across - and never whole first (that took the better part of a gigabyte, or failed outright)
+                    int fullW, fullH;
                     {
-                        fs.Position = 0;
+                        BitmapDecoder head = BitmapDecoder.Create(fs, BitmapCreateOptions.DelayCreation, BitmapCacheOption.None);
+                        fullW = head.Frames[0].PixelWidth;
+                        fullH = head.Frames[0].PixelHeight;
+                    }
+                    fs.Position = 0;
+                    BitmapDecoder dec;
+                    BitmapFrame frame;
+                    BitmapSource bmp;
+                    if ((long)fullW * fullH > 120000000L)
+                    {
                         var bi = new BitmapImage();
                         bi.BeginInit();
                         bi.StreamSource = fs;
                         bi.CacheOption = BitmapCacheOption.OnLoad;
-                        if (frame.PixelWidth >= frame.PixelHeight) bi.DecodePixelWidth = 12000; else bi.DecodePixelHeight = 12000;
+                        if (fullW >= fullH) bi.DecodePixelWidth = 12000; else bi.DecodePixelHeight = 12000;
                         bi.EndInit();
                         bmp = bi;
+                        fs.Position = 0;
+                        dec = BitmapDecoder.Create(fs, BitmapCreateOptions.DelayCreation, BitmapCacheOption.None);     // for its details only
+                        frame = dec.Frames[0];
+                    }
+                    else
+                    {
+                        dec = BitmapDecoder.Create(fs, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
+                        frame = dec.Frames[0];
+                        bmp = frame;
                     }
                     bmp.Freeze();
                     d.Bitmap = bmp;
-                    if (dec.Frames.Count > 1) ReadAnimation(dec, path, d);
+                    if (dec.Frames.Count > 1 && bmp == frame) ReadAnimation(dec, path, d);
                     d.Props.Add(new KeyValuePair<string, string>("Dimensions", d.Bitmap.PixelWidth + " × " + d.Bitmap.PixelHeight));
                     if (d.Frames != null) d.Props.Add(new KeyValuePair<string, string>("Animation", d.Frames.Count + " frames · " + (d.Delays.Sum() / 1000.0).ToString("0.#") + " s"));
                     ReadMetadata(frame.Metadata as BitmapMetadata, d);

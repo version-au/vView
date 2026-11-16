@@ -1,5 +1,10 @@
 # Testing
 
+## 0.1.30: huge pictures, pictures that changed
+1. A picture over 120 megapixels (13000 × 10000): it opens (at 12000 px across) and vView's memory stays in the hundreds of MB, not well over a GB; Dimensions and the camera details still show. Going through a folder of big scans: memory levels off (about 700 MB of pictures kept, the newest two always).
+2. Normal pictures, animated GIF / WebP: as before.
+3. View a picture, change and save it in another program, go to the next and back: the new picture shows. Open a picture while it is still being copied in ("can't show this picture"), go away and back once the copy has finished: it shows.
+
 ## 0.1.30: Delete where there is no Recycle Bin
 1. A picture on a network drive (S:\…), a \\server\share path or a USB stick, Delete: "Delete it for good? … is on a drive with no Recycle Bin …" - also with "Ask before deleting" off. Delete for good: gone, the next one shows, the log says "Deleted for good". Cancel: nothing happens.
 2. A picture on C: or another internal / external disk: as before - "Move to the Recycle Bin?" (or straight away with asking off), and it is in the Recycle Bin.
