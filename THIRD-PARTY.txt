@@ -22,7 +22,7 @@ NAudio - listens to vView's own sound for the visualiser
   Licence: MIT.
 
 vSuite.Core - the suite's shared library (theme, windows, updates)
-  (c) 2026 Steven (version-au) - https://github.com/version-au/vSuite.Core
+  (c) 2026 Steven Van Teylingen (version-au) - https://github.com/version-au/vSuite.Core
   Licence: MIT.
 
 .NET - the runtime built into the app
