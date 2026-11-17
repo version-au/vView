@@ -80,7 +80,7 @@ libVLC and LibVLCSharp (VideoLAN, LGPL 2.1 or later), Vanara, NAudio and WebView
 
 ## Licence
 
-Copyright (C) 2026 Steven (version-au). vView is free software: you can redistribute it and/or modify it under the terms of the
+Copyright (C) 2026 Steven Van Teylingen (version-au). vView is free software: you can redistribute it and/or modify it under the terms of the
 GNU General Public License, version 3 - see [LICENSE](LICENSE). It comes with no warranty. The shared library vSuite.Core is MIT, and
 the parts by others are listed in [THIRD-PARTY.txt](THIRD-PARTY.txt).
 
