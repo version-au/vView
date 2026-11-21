@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.31
+## 0.1.31 · release
 
 - The see-through background follows the window across monitors and past a screen's edge, and big windows drag smoothly (vSuite.Core 1.0.43).
 
