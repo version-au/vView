@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.31
+
+- The see-through background follows the window across monitors and past a screen's edge, and big windows drag smoothly (vSuite.Core 1.0.43).
+
 ## 0.1.30 · release
 - Delete on a network drive, a USB stick or a card (no Recycle Bin there) asks "Delete it for good?" first - it used to delete for good while saying it went to the Recycle Bin.
 - Huge pictures (panoramas, scans over 120 megapixels) open without being decoded at full size first, and the pictures kept for going back and forth are limited by their size.

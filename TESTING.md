@@ -1,5 +1,10 @@
 # Testing
 
+## 0.1.31: the glass across monitors
+1. With the window see-through (Blur, Frosted or the wallpaper as it is): drag it slowly from one monitor onto the next and back - smooth, each part showing its own monitor's wallpaper, moving with the window.
+2. Drag it half off a screen's edge: the background keeps moving with it (it used to stop at the edge).
+3. Drag it around one monitor: smooth; let go - it's live at once (hover highlights), text as sharp as before.
+
 ## 0.1.30: huge pictures, pictures that changed
 1. A picture over 120 megapixels (13000 × 10000): it opens (at 12000 px across) and vView's memory stays in the hundreds of MB, not well over a GB; Dimensions and the camera details still show. Going through a folder of big scans: memory levels off (about 700 MB of pictures kept, the newest two always).
 2. Normal pictures, animated GIF / WebP: as before.
