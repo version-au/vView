@@ -48,6 +48,8 @@ namespace vView.Ui
             _settings = settings;
             _themeSource = themeSource;
             InitializeComponent();
+            // Windows 11's snap layouts menu when the pointer rests on maximise (only while Windows' setting is on - else the plain button)
+            vSuite.Ui.SnapLayouts.Attach(this, MaxBtn);
             _icons = new ShellIcons(Dispatcher);
             Strip.ItemsSource = _items;
 
