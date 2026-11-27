@@ -1,6 +1,6 @@
 # Testing
 
-## 0.1.32 - signed with the Certum certificate
+## 0.1.33 - signed with the Certum certificate
 1. Before building: SimplySign Desktop connected (its tray icon > Connect, the code from the phone). `build.cmd` says "Signed: vView.exe",
    then Inno Setup signs the setup and its uninstaller. Not connected: a local build says "Building unsigned"; `build.cmd upload` stops.
 2. dist\setup\vView-setup.exe and the app: right-click > Properties > Digital Signatures - the Certum certificate, with a timestamp.
