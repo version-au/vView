@@ -23,6 +23,14 @@ if errorlevel 1 (echo. & echo BUILD FAILED - copy the errors above and send them
 copy /y THIRD-PARTY.txt dist\vView\ >nul
 if not exist dist\vView\libvlc\win-x64\plugins\plugins.dat echo NOTE: no VLC plugin cache (install VLC to make one) - videos take a moment longer to start the first time.
 for /f "usebackq delims=" %%v in (`powershell -NoProfile -Command "(Select-Xml -Path vView.csproj -XPath '//Version').Node.InnerText"`) do set VER=%%v
+rem code signing (the Certum certificate, through SimplySign Desktop - connect it first): the app now, so the installer carries the
+rem signed one; Inno Setup signs the setup and its uninstaller (sign.cmd). "nosign" skips it; an upload needs it. vSuite.Core\scripts\sign.ps1
+set SIGN=1
+for %%a in (%*) do if /i "%%~a"=="nosign" set SIGN=
+set SIGNREQ=
+for %%a in (%*) do if /i "%%~a"=="upload" set SIGNREQ=-Require
+if defined SIGN powershell -NoProfile -ExecutionPolicy Bypass -File "vSuite.Core\scripts\sign.ps1" %SIGNREQ% dist\vView\vView.exe dist\vView\vView.dll dist\vView\vSuite.Core.dll dist\vView\vSuite.Shell.dll
+if defined SIGN if errorlevel 2 (set SIGN=) else if errorlevel 1 (echo. & echo SIGNING FAILED - see above. & pause & exit /b 1)
 del /q dist\vView.zip 2>nul
 powershell -NoProfile -Command "Compress-Archive -Path 'dist\vView\*' -DestinationPath 'dist\vView.zip' -CompressionLevel Optimal"
 echo Built: %~dp0dist\vView\vView.exe
@@ -31,7 +39,7 @@ if not exist "%ISCC%" set ISCC=%ProgramFiles(x86)%\Inno Setup 6\ISCC.exe
 rem an older installer is never put up with this version: dist\setup is emptied first
 del /q dist\setup\*.exe 2>nul
 if not defined WANTSETUP (echo No installer this time - nosetup.) else if not exist "%ISCC%" (echo Inno Setup 6 not found - no installer made.) else (
-  "%ISCC%" /Q installer\vView.iss
+  if defined SIGN ("%ISCC%" /Q /DSIGN "/Svsuite=$q%~dp0vSuite.Core\scripts\sign.cmd$q $f" installer\vView.iss) else ("%ISCC%" /Q installer\vView.iss)
   if errorlevel 1 (echo. & echo INSTALLER FAILED - see above. & pause & exit /b 1)
   echo Installer: %~dp0dist\setup\
 )
@@ -46,6 +54,7 @@ rem "build.cmd upload" (with "pre" for a pre-release): dist\site\ straight onto 
 rem (%USERPROFILE%\.ssh\config), latest.json last, then checked over https (vSuite.Core\scripts\site-upload.ps1)
 set UPLOAD=
 for %%a in (%*) do if /i "%%~a"=="upload" set UPLOAD=1
+if defined UPLOAD if not defined SIGN (echo. & echo UPLOAD STOPPED - this build isn't signed. Connect SimplySign Desktop and build again. & pause & exit /b 1)
 if defined UPLOAD powershell -NoProfile -ExecutionPolicy Bypass -File "vSuite.Core\scripts\site-upload.ps1" -Site dist\site
 if defined UPLOAD if errorlevel 1 (echo. & echo UPLOAD FAILED - see above. & pause & exit /b 1)
 echo For the update site: copy everything in %~dp0dist\site\ over the site's root (the files there are replaced).
